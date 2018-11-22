@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ContentModelStore">
+    <e p="C:\Users\vbezs\.Rider2018.2\system\extResources" t="IncludeRecursive" />
+    <e p="C:\Users\vbezs\.Rider2018.2\system\resharper-host\Local\Transient\ReSharperHost\v182\SolutionCaches\_Match_3_proj.1793271033.00" t="ExcludeRecursive" />
+    <e p="D:\Projects\Match_3_proj\Match_3_proj" t="IncludeRecursive">
+      <e p="Assembly-CSharp.csproj" t="IncludeRecursive" />
+      <e p="Assets" t="Include">
+        <e p="Scripts" t="Include">
+          <e p="DataGridItems.cs" t="Include" />
+          <e p="GridItems.cs" t="Include" />
+          <e p="ItemsType.cs" t="Include" />
+          <e p="Managers" t="Include">
+            <e p="CameraManager.cs" t="Include" />
+            <e p="EventsGameManager.cs" t="Include" />
+          </e>
+          <e p="MatchLogic.cs" t="Include" />
+        </e>
+      </e>
+      <e p="Library" t="ExcludeRecursive" />
+      <e p="Match_3_proj.sln" t="IncludeFlat" />
+      <e p="obj" t="ExcludeRecursive" />
+      <e p="packages" t="ExcludeRecursive" />
+      <e p="Temp" t="ExcludeRecursive">
+        <e p="bin" t="ExcludeRecursive" />
+      </e>
+    </e>
+  </component>
+</project>
