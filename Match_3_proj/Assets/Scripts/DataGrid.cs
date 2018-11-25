@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -8,12 +9,14 @@ public class DataGrid : MonoBehaviour
 
     public GridItem[,] Items;
     
+    [SerializeField][Range(7, 10)] private int Xsize;
+    [SerializeField][Range(10, 13)] private int Ysize;
     [SerializeField] private GameObject[] Presets;
     [SerializeField] private float ItemWidth = 1f;
     [SerializeField] private float ItemHeight = 1f;
-    [SerializeField] private int Xsize;
-    [SerializeField] private int Ysize;
     [SerializeField] private float MoveDuration = .25f;
+    [SerializeField] private float DestroyDuration = .25f;
+    [SerializeField] private GameObject BackgroundTile;
 
     private readonly int ItemsForMatch = 3;
     private GridItem SelectedItem;
@@ -43,9 +46,11 @@ public class DataGrid : MonoBehaviour
         return Ysize;
     }
     
-    private void OnEnable()
+    private void Start()
     {
+        CreateBoard();
         CreateField();
+        StartCoroutine(CheckField());
         GridItem.OnMouseOverItemHandler += OnMouseOverGridItem;
     }
 
@@ -57,14 +62,31 @@ public class DataGrid : MonoBehaviour
             for (int y = 0; y < Ysize; y++)
                 Items[x, y] = InstantiateItem(x, y);
     }
+    
+    private void CreateBoard()
+    {
+        Items = new GridItem[Xsize, Ysize];
+
+        for (int x = 0; x < Xsize; x++)
+            for (int y = 0; y < Ysize; y++)
+                CreateBoardBackground(x, y);
+    }
+    
+    private void CreateBoardBackground(int x, int y)
+    {
+        Vector2 bgTilePos = new Vector2(x, y);
+        GameObject bgTile = Instantiate(BackgroundTile, bgTilePos, Quaternion.identity);
+        bgTile.transform.SetParent(this.transform);
+        bgTile.name = "BgTile" + x + "_" + y;
+    }
 
     private GridItem InstantiateItem(int x, int y)
     {
         GameObject itemGameObject = GetRandomItemFromPreset(Presets.Length);
-        Vector2 itemPos = new Vector2(x * ItemWidth + ItemWidth / 2, y * ItemHeight + ItemHeight / 2);
-        Quaternion itemAngle = Quaternion.identity;
-        
-        GridItem item = Instantiate(itemGameObject, itemPos, itemAngle).GetComponent<GridItem>();
+        Vector2 tilePos = new Vector2(x, y);
+        GridItem item = Instantiate(itemGameObject, tilePos, Quaternion.identity).GetComponent<GridItem>();
+        item.transform.SetParent(this.transform);
+        item.name = "Tile" + x + "_" + y;
         item.OnItemPositionChange(x,y);
         return item;
     }
@@ -88,7 +110,7 @@ public class DataGrid : MonoBehaviour
             if (xDiff + yDiff == 1)
             {
                 print("Try match");
-                StartCoroutine(TryMatch(SelectedItem, item));
+                StartCoroutine(TryMatch(SelectedItem, item, false));
             }
             else
             {
@@ -98,37 +120,80 @@ public class DataGrid : MonoBehaviour
         }
     }
 
-    private IEnumerator TryMatch(GridItem selectedItem, GridItem item)
+    private IEnumerator CheckField()
     {
-        yield return StartCoroutine(Swap(selectedItem, item));
-        Debug.Log("Start swap");
+        for (int x = 0; x < Xsize; x++)
+        {
+            for (int y = 0; y < Ysize; y++)
+            {
+                
+                int left = y + 1;
+                if (left < Ysize && Items[x, left] != null)
+                {
+                    GridItem selectedItem = Items[x, y];
+                    GridItem item = Items[x, left];
+                    yield return StartCoroutine(TryMatch(selectedItem, item));
+                }
+                int up = x + 1;
+                if (up < Xsize && Items[up, y] != null)
+                {
+                    GridItem selectedItem = Items[x, y];
+                    GridItem item = Items[up, y];
+                    yield return StartCoroutine(TryMatch(selectedItem, item));
+                }
+                
+            }
+        }
+    }
+
+    //TODO: Block mouse on move period
+    //TODO: Create new TryMatch for auto match
+    private IEnumerator TryMatch(GridItem selectedItem, GridItem item, bool isAuto = true)
+    {
+        if (!isAuto)
+        {
+            yield return StartCoroutine(Swap(selectedItem, item));
+            Debug.Log("Start swap");
+        }
 
         Logic.MatchInfo matchForSelectedItem = MatchGetter.GetMatchInfo(selectedItem);
         Logic.MatchInfo matchForItem = MatchGetter.GetMatchInfo(item);
         
-        if (!matchForSelectedItem.IsValidMatch() && !matchForItem.IsValidMatch())
+        if (!matchForSelectedItem.IsValidMatch() && !matchForItem.IsValidMatch() && !isAuto)
         {
             yield return StartCoroutine(Swap(selectedItem, item));
-            yield break;
         }
-//        if (matchA.validMatch())
-//        {
-//            Debug.Log("Matche");
-//            yield return StartCoroutine(MyDestroy(matchA.match));
-//            yield return new WaitForSeconds(DelayBetweenMathes);
-//            yield return StartCoroutine(UpdateGridAfterMAtch(matchA));
-//
-//        }
-//        else if (matchB.validMatch())
-//        {
-//            Debug.Log("No Matches");
-//            yield return StartCoroutine(MyDestroy(matchB.match));
-//            yield return new WaitForSeconds(DelayBetweenMathes);
-//            yield return StartCoroutine(UpdateGridAfterMAtch(matchB));
-//        }
+        if (matchForSelectedItem.IsValidMatch())
+        {
+            Debug.Log("Match For Selected Item");
+            yield return StartCoroutine(MyDestroy(matchForSelectedItem.Matches));
+            //yield return new WaitForSeconds(DelayBetweenMathes);
+            //yield return StartCoroutine(UpdateGridAfterMAtch(matchA));
 
+        }
+        else if (matchForItem.IsValidMatch())
+        {
+            Debug.Log("Match For Item");
+            yield return StartCoroutine(MyDestroy(matchForItem.Matches));
+            //yield return new WaitForSeconds(DelayBetweenMathes);
+            //yield return StartCoroutine(UpdateGridAfterMAtch(matchB));
+        }
     }
 
+    private IEnumerator MyDestroy(List<GridItem> matches)
+    {
+        foreach (var item in matches)
+        {
+            item.DestroyEffect.Play();
+            var destroyEffectMain = item.DestroyEffect.main;
+            destroyEffectMain.startColor = new ParticleSystem.MinMaxGradient(item.GetComponent<SpriteRenderer>().color);
+            yield return StartCoroutine(item.transform.Scale(Vector3.zero, DestroyDuration));
+            
+            //yield return new WaitForSeconds(item.DestroyEffect.main.duration);
+            Destroy(item.gameObject);
+        }
+    }
+    
     private IEnumerator Swap(GridItem selectedItem, GridItem item)
     {
         Vector3 selectedItemPosition = selectedItem.transform.position;

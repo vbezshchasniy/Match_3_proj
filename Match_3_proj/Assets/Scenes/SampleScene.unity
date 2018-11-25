@@ -145,8 +145,8 @@ Camera:
   m_GameObject: {fileID: 519420028}
   m_Enabled: 1
   serializedVersion: 2
-  m_ClearFlags: 4
-  m_BackGroundColor: {r: 0.19215687, g: 0.3019608, b: 0.4745098, a: 0}
+  m_ClearFlags: 2
+  m_BackGroundColor: {r: 0.09803922, g: 0.09803922, b: 0.09803922, a: 0}
   m_projectionMatrixMode: 1
   m_SensorSize: {x: 36, y: 24}
   m_LensShift: {x: 0, y: 0}
@@ -161,7 +161,7 @@ Camera:
   far clip plane: 1000
   field of view: 60
   orthographic: 1
-  orthographic size: 5
+  orthographic size: 8
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
@@ -184,7 +184,7 @@ Transform:
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 519420028}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 5, y: 5, z: -10}
+  m_LocalPosition: {x: 3, y: 5, z: -10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
@@ -217,17 +217,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 21a2f5a4b71dd6f4892d943947d773fa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  Xsize: 7
+  Ysize: 10
   Presets:
-  - {fileID: 1277704572803272, guid: 90ed5938a2df6604880cd97b8ce3bcc6, type: 2}
-  - {fileID: 1277704572803272, guid: 5839295701e4964448e41e673932417e, type: 2}
-  - {fileID: 1277704572803272, guid: d6ea0e07e344ad7429a1bb3fa15394ab, type: 2}
-  - {fileID: 1277704572803272, guid: 4fe53f97dbaeaeb48b3d79ed2f683309, type: 2}
-  - {fileID: 1277704572803272, guid: facd35e445cf70e4e8182f09385277cb, type: 2}
+  - {fileID: 1231629178729780, guid: 0d85e8e8e1ff4304693a884e3b7d56a2, type: 2}
+  - {fileID: 1299479125518838, guid: 03fe42b00554863409af0123ed9d0f4a, type: 2}
+  - {fileID: 1825346867060628, guid: 9d65d34b7fd69c94aa13d5732d4d2814, type: 2}
+  - {fileID: 1025288240417012, guid: 86c643fa6a4dfd44697dc61d741a1408, type: 2}
+  - {fileID: 1288060850332614, guid: 9a7cfbae50f68b34fb93de87f73e852c, type: 2}
   ItemWidth: 1
   ItemHeight: 1
-  Xsize: 5
-  Ysize: 5
   MoveDuration: 0.25
+  DestroyDuration: 0.25
+  BackgroundTile: {fileID: 1872866985375604, guid: 40087f262c4cfe449b1dedeb042dedf7,
+    type: 2}
 --- !u!4 &1258946253
 Transform:
   m_ObjectHideFlags: 0

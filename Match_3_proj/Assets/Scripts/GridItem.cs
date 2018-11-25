@@ -5,6 +5,7 @@ public class GridItem : MonoBehaviour
 {
     #region Fields
 
+    public ParticleSystem DestroyEffect;
     public delegate void OnMouseOverItem(GridItem item);
 
     public ItemType Type;
