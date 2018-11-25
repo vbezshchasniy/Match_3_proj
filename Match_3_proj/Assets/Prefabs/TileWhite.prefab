@@ -109,7 +109,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 95ac62a787c234946a20ce8556284855, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  DestroyEffect: {fileID: 198850314013485932}
+  DestroyEffect: {fileID: 198489625684907568, guid: 7c2bf47614e5f4848a151795309ad33e,
+    type: 2}
   Type: 4
 --- !u!198 &198850314013485932
 ParticleSystem:

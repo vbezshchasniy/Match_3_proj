@@ -14,13 +14,13 @@ public class DataGrid : MonoBehaviour
     [SerializeField] private GameObject[] Presets;
     [SerializeField] private float ItemWidth = 1f;
     [SerializeField] private float ItemHeight = 1f;
-    [SerializeField] private float MoveDuration = .25f;
-    [SerializeField] private float DestroyDuration = .25f;
+    [SerializeField] private float MoveDuration = .15f;
+    [SerializeField] private float DestroyDuration = .15f;
     [SerializeField] private GameObject BackgroundTile;
 
     private readonly int ItemsForMatch = 3;
     private GridItem SelectedItem;
-    private Logic.MatchGetter MatchGetter;
+    private readonly Logic.MatchGetter MatchGetter;
 
     #endregion
 
@@ -28,8 +28,7 @@ public class DataGrid : MonoBehaviour
 
     #endregion
 
-
-    #region Methods
+     #region Methods
 
     public DataGrid()
     {
@@ -77,7 +76,7 @@ public class DataGrid : MonoBehaviour
         Vector2 bgTilePos = new Vector2(x, y);
         GameObject bgTile = Instantiate(BackgroundTile, bgTilePos, Quaternion.identity);
         bgTile.transform.SetParent(this.transform);
-        bgTile.name = "BgTile" + x + "_" + y;
+        bgTile.name = string.Format("BgTile{0}_{1}", x.ToString(), y.ToString());
     }
 
     private GridItem InstantiateItem(int x, int y)
@@ -86,7 +85,7 @@ public class DataGrid : MonoBehaviour
         Vector2 tilePos = new Vector2(x, y);
         GridItem item = Instantiate(itemGameObject, tilePos, Quaternion.identity).GetComponent<GridItem>();
         item.transform.SetParent(this.transform);
-        item.name = "Tile" + x + "_" + y;
+        item.name = string.Format("Tile{0}_{1}", x.ToString(), y.ToString());
         item.OnItemPositionChange(x,y);
         return item;
     }
@@ -166,7 +165,7 @@ public class DataGrid : MonoBehaviour
         if (matchForSelectedItem.IsValidMatch())
         {
             Debug.Log("Match For Selected Item");
-            yield return StartCoroutine(MyDestroy(matchForSelectedItem.Matches));
+            yield return StartCoroutine(DestroyItems(matchForSelectedItem.Matches));
             //yield return new WaitForSeconds(DelayBetweenMathes);
             //yield return StartCoroutine(UpdateGridAfterMAtch(matchA));
 
@@ -174,22 +173,21 @@ public class DataGrid : MonoBehaviour
         else if (matchForItem.IsValidMatch())
         {
             Debug.Log("Match For Item");
-            yield return StartCoroutine(MyDestroy(matchForItem.Matches));
+            yield return StartCoroutine(DestroyItems(matchForItem.Matches));
             //yield return new WaitForSeconds(DelayBetweenMathes);
             //yield return StartCoroutine(UpdateGridAfterMAtch(matchB));
         }
     }
 
-    private IEnumerator MyDestroy(List<GridItem> matches)
+    private IEnumerator DestroyItems(List<GridItem> matches)
     {
-        foreach (var item in matches)
+        foreach (GridItem item in matches)
         {
-            item.DestroyEffect.Play();
-            var destroyEffectMain = item.DestroyEffect.main;
-            destroyEffectMain.startColor = new ParticleSystem.MinMaxGradient(item.GetComponent<SpriteRenderer>().color);
+//            ParticleSystem.MainModule destroyEffectMain = item.DestroyEffect.main;
+//            destroyEffectMain.startColor = new ParticleSystem.MinMaxGradient(item.GetComponent<SpriteRenderer>().color);
             yield return StartCoroutine(item.transform.Scale(Vector3.zero, DestroyDuration));
-            
-            //yield return new WaitForSeconds(item.DestroyEffect.main.duration);
+//            item.DestroyEffect.Play();
+//            yield return new WaitForSeconds(item.DestroyEffect.main.duration);
             Destroy(item.gameObject);
         }
     }
