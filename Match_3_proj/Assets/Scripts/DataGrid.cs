@@ -1,9 +1,9 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
+﻿using Logic;
 using System.Text;
-using Logic;
 using UnityEngine;
+using DG.Tweening;
+using System.Collections;
+using System.Collections.Generic;
 
 public class DataGrid : MonoBehaviour
 {
@@ -55,10 +55,9 @@ public class DataGrid : MonoBehaviour
         StartCoroutine(CheckField());
     }
 
-    private IEnumerator CreateNewItems()
+    private void CreateNewItems()
     {
         DropDownItems();
-        yield return null;
     }
 
     private void DropDownItems()
@@ -72,7 +71,7 @@ public class DataGrid : MonoBehaviour
             while (down < Ysize && Items[x, down].Type == ItemType.Empty)
             {
                 isEmptyBelow = true;
-                if ((down +1  < Ysize && Items[x, down+1].Type == ItemType.Empty))
+                if ((down + 1 < Ysize && Items[x, down + 1].Type == ItemType.Empty))
                 {
                     down++;
                 }
@@ -80,7 +79,7 @@ public class DataGrid : MonoBehaviour
 
             if (isEmptyBelow)
             {
-                StartCoroutine(Items[x, y].transform.Move(Items[x, down].transform.position, MoveDuration));
+                Items[x, y].transform.DOMove(Items[x, down].transform.position, MoveDuration);
                 isEmptyBelow = false;
             }
         }
@@ -149,7 +148,7 @@ public class DataGrid : MonoBehaviour
             if (xDiff + yDiff == 1)
             {
                 print("Try match");
-                StartCoroutine(TryMatch(SelectedItem, item));
+                TryMatch(SelectedItem, item);
             }
             else
             {
@@ -181,10 +180,10 @@ public class DataGrid : MonoBehaviour
 
         if (autoMatchSet.Count > 0)
         {
-            StartCoroutine(DestroyItems(autoMatchSet));
+            DestroyItems(autoMatchSet);
             yield return new WaitForSeconds(DestroyDuration + .01f);
 
-            StartCoroutine(CreateNewItems());
+            CreateNewItems();
             yield return new WaitForSeconds(TimeForCreation);
         }
 //            else
@@ -197,24 +196,23 @@ public class DataGrid : MonoBehaviour
     }
 
     //TODO: Block mouse on move period
-    private IEnumerator TryMatch(GridItem selectedItem, GridItem item)
+    private void TryMatch(GridItem selectedItem, GridItem item)
     {
-        yield return StartCoroutine(Swap(selectedItem, item));
-
         Debug.Log("Start swap");
+        Swap(selectedItem, item);
 
         MatchInfo matchForSelectedItem = MatchGetter.GetMatchInfo(selectedItem);
         MatchInfo matchForItem = MatchGetter.GetMatchInfo(item);
 
         if (!matchForSelectedItem.IsValidMatch() && !matchForItem.IsValidMatch())
         {
-            yield return StartCoroutine(Swap(selectedItem, item));
+            Swap(selectedItem, item, true);
         }
 
         if (matchForSelectedItem.IsValidMatch())
         {
             Debug.Log("Match For Selected Item");
-            yield return StartCoroutine(DestroyItems(matchForSelectedItem.Matches));
+            DestroyItems(matchForSelectedItem.Matches);
 
             //yield return new WaitForSeconds(DelayBetweenMathes);
             //yield return StartCoroutine(UpdateGridAfterMAtch(matchA));
@@ -222,7 +220,7 @@ public class DataGrid : MonoBehaviour
         else if (matchForItem.IsValidMatch())
         {
             Debug.Log("Match For Item");
-            yield return StartCoroutine(DestroyItems(matchForItem.Matches));
+            DestroyItems(matchForItem.Matches);
 
             //yield return new WaitForSeconds(DelayBetweenMathes);
             //yield return StartCoroutine(UpdateGridAfterMAtch(matchB));
@@ -234,37 +232,26 @@ public class DataGrid : MonoBehaviour
         return MatchGetter.GetAutoMatchInfo(gridItem);
     }
 
-    private IEnumerator DestroyItems(ICollection<GridItem> matches)
+    private void DestroyItems(ICollection<GridItem> matches)
     {
-        print("DestroyItems");
-//        if (matches == null || matches.Count < ItemsForMatch)
-//            yield return null;
-
         foreach (GridItem item in matches)
         {
-            StartCoroutine(item.transform.Scale(Vector3.zero, DestroyDuration));
+            GridItem tmp = item;
+            tmp.transform.DOScale(Vector3.zero, DestroyDuration).onComplete(() => Destroy(tmp));
             Items[item.X, item.Y].Type = ItemType.Empty;
         }
 #if DEBUG
         PrintColors();
 #endif
-
-        //TODO ADD DoTween
-        yield return new WaitForSeconds(DestroyDuration + .01f);
-
-        foreach (GridItem item in matches)
-        {
-            Destroy(item.gameObject);
-        }
     }
 
-    private IEnumerator Swap(GridItem selectedItem, GridItem item)
+    private void Swap(GridItem selectedItem, GridItem item, bool isDelay = false)
     {
         Vector3 selectedItemPosition = selectedItem.transform.position;
         Vector3 itemPosition = item.transform.position;
-        StartCoroutine(selectedItem.transform.Move(itemPosition, MoveDuration));
-        StartCoroutine(item.transform.Move(selectedItemPosition, MoveDuration));
-        yield return new WaitForSeconds(MoveDuration);
+        float delay = isDelay ? MoveDuration : 0;
+        selectedItem.transform.DOMove(itemPosition, MoveDuration).SetDelay(delay);
+        item.transform.DOMove(selectedItemPosition, MoveDuration).SetDelay(delay);
 
         SwapItemsIndex(selectedItem, item);
     }
