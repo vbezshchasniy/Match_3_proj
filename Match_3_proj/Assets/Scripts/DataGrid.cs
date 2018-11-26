@@ -236,9 +236,9 @@ public class DataGrid : MonoBehaviour
     {
         foreach (GridItem item in matches)
         {
-            GridItem tmp = item;
-            tmp.transform.DOScale(Vector3.zero, DestroyDuration).onComplete(() => Destroy(tmp));
+            item.transform.DOScale(Vector3.zero, DestroyDuration);
             Items[item.X, item.Y].Type = ItemType.Empty;
+            Destroy(item.gameObject, DestroyDuration);
         }
 #if DEBUG
         PrintColors();
