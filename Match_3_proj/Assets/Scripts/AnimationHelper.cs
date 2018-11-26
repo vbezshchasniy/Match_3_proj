@@ -3,7 +3,6 @@ using UnityEngine;
 
 public static class AnimationHelper
 {
-    //TODO: Refactor coroutines
     public static IEnumerator Move(this Transform t, Vector3 target, float duration)
     {
         Vector3 diffVector = target - t.position;

@@ -24,20 +24,20 @@ namespace Logic
 
             if (horizontalItems.Count >= _itemsForMatch) // && match.Count > match.Count)
             {
-                matchInfo.MatchStartX = GetLowestX(horizontalItems);
-                matchInfo.MatchEndX = GetHighestX(horizontalItems);
-                matchInfo.MatchStartY = horizontalItems.First().Y;
-                matchInfo.MatchEndY = horizontalItems.First().Y;
+//                matchInfo.MatchStartX = GetLowestX(horizontalItems);
+//                matchInfo.MatchEndX = GetHighestX(horizontalItems);
+//                matchInfo.MatchStartY = horizontalItems.First().Y;
+//                matchInfo.MatchEndY = horizontalItems.First().Y;
 
                 matchInfo.Matches = horizontalItems;
                 Debug.Log("Horizontal match");
             }
             else if (verticalItems.Count >= _itemsForMatch)
             {
-                matchInfo.MatchStartY = GetLowestY(verticalItems);
-                matchInfo.MatchEndY = GetHighestY(verticalItems);
-                matchInfo.MatchStartX = verticalItems.First().X;
-                matchInfo.MatchEndX = verticalItems.First().X;
+//                matchInfo.MatchStartY = GetLowestY(verticalItems);
+//                matchInfo.MatchEndY = GetHighestY(verticalItems);
+//                matchInfo.MatchStartX = verticalItems.First().X;
+//                matchInfo.MatchEndX = verticalItems.First().X;
 
                 matchInfo.Matches = verticalItems;
                 Debug.Log("Vertical match");

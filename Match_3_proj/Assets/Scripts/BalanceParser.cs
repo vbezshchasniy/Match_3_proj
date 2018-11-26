@@ -45,4 +45,9 @@ public class BalanceParser
     {
         return Items[x, y];
     }
+    
+    public ItemType GetItemType(int x, int y)
+    {
+        return (ItemType)Items[x, y];
+    }
 }

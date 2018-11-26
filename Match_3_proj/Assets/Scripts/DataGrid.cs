@@ -4,6 +4,7 @@ using UnityEngine;
 using DG.Tweening;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 
 public class DataGrid : MonoBehaviour
 {
@@ -17,6 +18,8 @@ public class DataGrid : MonoBehaviour
     [SerializeField] private float ItemHeight = 1f;
     [SerializeField] private float MoveDuration = .25f;
     [SerializeField] private float DestroyDuration = .25f;
+    [SerializeField] private float MoveUpDuration = .25f;
+
     [SerializeField] private float TimeForCreation = 1f;
     [SerializeField] private GameObject BackgroundTile;
 
@@ -52,44 +55,20 @@ public class DataGrid : MonoBehaviour
         CreateField();
         GridItem.OnMouseOverItemHandler += OnMouseOverGridItem;
 
-        StartCoroutine(CheckField());
+        AutoUpdateField();
     }
 
-    private void CreateNewItems()
+    private void AutoUpdateField()
     {
-        DropDownItems();
-    }
-
-    private void DropDownItems()
-    {
-        bool isEmptyBelow = false;
-        int down = 0;
-        for (int x = 0; x < Xsize; x++)
-        for (int y = 0; y < Ysize; y++)
-        {
-            down = y + 1;
-            while (down < Ysize && Items[x, down].Type == ItemType.Empty)
-            {
-                isEmptyBelow = true;
-                if ((down + 1 < Ysize && Items[x, down + 1].Type == ItemType.Empty))
-                {
-                    down++;
-                }
-            }
-
-            if (isEmptyBelow)
-            {
-                Items[x, y].transform.DOMove(Items[x, down].transform.position, MoveDuration);
-                isEmptyBelow = false;
-            }
-        }
+        IsThereAutoMatchItems();
+        DOVirtual.DelayedCall(DestroyDuration, UpdateFieldAfterAutoMatch);
     }
 
     private void CreateField()
     {
         for (int x = 0; x < Xsize; x++)
         for (int y = 0; y < Ysize; y++)
-            Items[x, y] = InstantiateItem(x, y);
+            Items[x, y] = InstantiateItem(x, y, BalanceParser.GetItemType(x, y));
     }
 
     //TODO Refactor VITALIY
@@ -110,26 +89,22 @@ public class DataGrid : MonoBehaviour
         bgTile.name = string.Format("BgTile{0}_{1}", x.ToString(), y.ToString());
     }
 
-    private GridItem InstantiateItem(int x, int y)
+    private GridItem InstantiateItem(int x, int y, ItemType type)
     {
-        int itemIndex = BalanceParser.GetItemIndex(x, y);
-        GameObject itemGameObject = FindCorrectPreset(itemIndex);
+        GameObject itemGameObject = FindCorrectPreset(type);
 
         Vector2 tilePos = new Vector2(x * ItemWidth, y * ItemHeight);
         GridItem item = Instantiate(itemGameObject, tilePos, Quaternion.identity).GetComponent<GridItem>();
         item.transform.SetParent(this.transform);
-
-        item.name = string.Format("Tile{0}_{1}", x.ToString(), y.ToString());
-        item.Type = (ItemType) itemIndex;
+        item.Type = type;
         item.OnItemPositionChange(x, y);
-
         return item;
     }
 
-    private GameObject FindCorrectPreset(int itemIndex)
+    private GameObject FindCorrectPreset(ItemType type)
     {
         foreach (GameObject preset in Presets)
-            if (preset.GetComponent<GridItem>().Type == (ItemType) itemIndex)
+            if (preset.GetComponent<GridItem>().Type == type)
                 return preset;
 
         return Presets[0];
@@ -159,18 +134,17 @@ public class DataGrid : MonoBehaviour
         }
     }
 
-    private IEnumerator CheckField()
+    private bool IsThereAutoMatchItems()
     {
         Debug.Log("AutoMatch");
-//        while (true)
-//        {
+
         HashSet<GridItem> autoMatchSet = new HashSet<GridItem>();
         for (int x = 0; x < Xsize; x++)
         {
             for (int y = 0; y < Ysize; y++)
             {
-                MatchInfo autoMatchInfo = GetAutoMatchInfo(Items[x, y]);
-                List<GridItem> autoMatchInfoList = autoMatchInfo.Matches;
+                MatchInfo matchInfo = MatchGetter.GetAutoMatchInfo(Items[x, y]);
+                List<GridItem> autoMatchInfoList = matchInfo.Matches;
                 if (autoMatchInfoList != null)
                 {
                     autoMatchSet.UnionWith(autoMatchInfoList);
@@ -178,21 +152,40 @@ public class DataGrid : MonoBehaviour
             }
         }
 
-        if (autoMatchSet.Count > 0)
+        DestroyItems(autoMatchSet);
+        return autoMatchSet.Count > 0;
+    }
+
+    private void UpdateFieldAfterAutoMatch()
+    {
+        DropDownItems();
+        CreateNewItems();
+    }
+
+    private void DropDownItems()
+    {
+        UpdateInfo uInfo = new UpdateInfo();
+        int down = 0;
+        for (int x = 0; x < Xsize; x++)
         {
-            DestroyItems(autoMatchSet);
-            yield return new WaitForSeconds(DestroyDuration + .01f);
+            for (int y = Ysize; y > -1; y--)
+            {
+                IsFallDown(x, y, y - 1);
+                    uInfo.Transformations.Add(new UpdateInfo.GridItemPair(Items[x, y], Items[x, down]));
 
-            CreateNewItems();
-            yield return new WaitForSeconds(TimeForCreation);
+                Swap(Items[x, y], Items[x, down]);
+            }
         }
-//            else
-//            {
-//                break;
-//            }
-//        }
+    }
 
-        yield return null;
+    private bool IsFallDown(int x, int y, int down)
+    {
+        return down > -1 && Items[x, down].Type == ItemType.Empty;
+    }
+
+    private void CreateNewItems()
+    {
+//        throw new System.NotImplementedException();
     }
 
     //TODO: Block mouse on move period
@@ -227,22 +220,23 @@ public class DataGrid : MonoBehaviour
         }
     }
 
-    private MatchInfo GetAutoMatchInfo(GridItem gridItem)
-    {
-        return MatchGetter.GetAutoMatchInfo(gridItem);
-    }
-
     private void DestroyItems(ICollection<GridItem> matches)
     {
         foreach (GridItem item in matches)
         {
             item.transform.DOScale(Vector3.zero, DestroyDuration);
-            Items[item.X, item.Y].Type = ItemType.Empty;
             Destroy(item.gameObject, DestroyDuration);
+            DOVirtual.DelayedCall(DestroyDuration, CreateEmptyItem(item.X, item.Y));
         }
 #if DEBUG
         PrintColors();
 #endif
+    }
+
+    private TweenCallback CreateEmptyItem(int x, int y)
+    {
+        Items[x, y] = InstantiateItem(x, y, ItemType.Empty);
+        return null;
     }
 
     private void Swap(GridItem selectedItem, GridItem item, bool isDelay = false)
@@ -270,7 +264,6 @@ public class DataGrid : MonoBehaviour
         item.OnItemPositionChange(tmpX, tmpY);
     }
     #endregion
-
     #region Auxilary
     [ContextMenu("Print grid Ints")]
     private void PrintInts()
