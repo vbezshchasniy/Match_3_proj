@@ -111,7 +111,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   DestroyEffect: {fileID: 198489625684907568, guid: 7c2bf47614e5f4848a151795309ad33e,
     type: 2}
-  Type: 2
+  Type: 3
 --- !u!198 &198863033792329314
 ParticleSystem:
   m_ObjectHideFlags: 1

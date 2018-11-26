@@ -18,7 +18,7 @@ namespace Logic
         public MatchInfo GetMatchInfo(GridItem item)
         {
             MatchInfo matchInfo = new MatchInfo {Matches = null};
-            
+
             List<GridItem> horizontalItems = GetHorizontalSimilarItems(item);
             List<GridItem> verticalItems = GetVerticalSimilarItems(item);
 
@@ -28,7 +28,7 @@ namespace Logic
                 matchInfo.MatchEndX = GetHighestX(horizontalItems);
                 matchInfo.MatchStartY = horizontalItems.First().Y;
                 matchInfo.MatchEndY = horizontalItems.First().Y;
-                
+
                 matchInfo.Matches = horizontalItems;
                 Debug.Log("Horizontal match");
             }
@@ -38,11 +38,35 @@ namespace Logic
                 matchInfo.MatchEndY = GetHighestY(verticalItems);
                 matchInfo.MatchStartX = verticalItems.First().X;
                 matchInfo.MatchEndX = verticalItems.First().X;
-                
+
                 matchInfo.Matches = verticalItems;
                 Debug.Log("Vertical match");
             }
-            
+
+            return matchInfo;
+        }
+
+        public MatchInfo GetAutoMatchInfo(GridItem item)
+        {
+            MatchInfo matchInfo = new MatchInfo {Matches = null};
+
+            List<GridItem> horizontalItems = GetHorizontalSimilarItems(item);
+            List<GridItem> verticalItems = GetVerticalSimilarItems(item);
+
+            if (horizontalItems.Count >= _itemsForMatch)
+            {
+                matchInfo.Matches = new List<GridItem>(horizontalItems);
+                Debug.Log("Horizontal match");
+            }
+            else if (verticalItems.Count >= _itemsForMatch)
+            {
+                if (matchInfo.Matches == null)
+                    matchInfo.Matches = new List<GridItem>(verticalItems);
+                else
+                    matchInfo.Matches.AddRange(verticalItems);
+                Debug.Log("Vertical match");
+            }
+
             return matchInfo;
         }
 
@@ -55,7 +79,7 @@ namespace Logic
 
             return isMatch;
         }
-        
+
         private bool CheckHorizontalMatchToBound(int index, GridItem item, int bound)
         {
             bool isMatch = false;
@@ -65,6 +89,7 @@ namespace Logic
 
             return isMatch;
         }
+
         private bool CheckVerticalMatchBeforeBound(int index, GridItem item, int bound)
         {
             bool isMatch = false;
@@ -74,6 +99,7 @@ namespace Logic
 
             return isMatch;
         }
+
         private bool CheckVerticalMatchToBound(int index, GridItem item, int bound)
         {
             bool isMatch = false;
