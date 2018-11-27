@@ -230,6 +230,7 @@ MonoBehaviour:
   ItemHeight: 1
   MoveDuration: 0.25
   DestroyDuration: 0.25
+  TimeForCreation: 1
   BackgroundTile: {fileID: 1872866985375604, guid: 40087f262c4cfe449b1dedeb042dedf7,
     type: 2}
 --- !u!4 &1258946253

@@ -1,10 +1,13 @@
-﻿using Logic;
+﻿using System;
+using Logic;
 using System.Text;
 using UnityEngine;
 using DG.Tweening;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
+using Random = UnityEngine.Random;
 
 public class DataGrid : MonoBehaviour
 {
@@ -18,8 +21,6 @@ public class DataGrid : MonoBehaviour
     [SerializeField] private float ItemHeight = 1f;
     [SerializeField] private float MoveDuration = .25f;
     [SerializeField] private float DestroyDuration = .25f;
-    [SerializeField] private float MoveUpDuration = .25f;
-
     [SerializeField] private float TimeForCreation = 1f;
     [SerializeField] private GameObject BackgroundTile;
 
@@ -60,8 +61,29 @@ public class DataGrid : MonoBehaviour
 
     private void AutoUpdateField()
     {
+        //TODO Make a cycle 
+        // проверять пока есть автосовпадения
         IsThereAutoMatchItems();
         DOVirtual.DelayedCall(DestroyDuration, UpdateFieldAfterAutoMatch);
+        DOVirtual.DelayedCall(DestroyDuration+TimeForCreation, CreateNewItems);
+    }
+
+    private void CreateNewItems()
+    {
+        for (int x = 0; x < Xsize; x++)
+        for (int y = 0; y < Ysize; y++)
+        {
+            if (Items[x, y].Type == ItemType.Empty)
+            {
+                Destroy(Items[x, y].gameObject);
+                InstantiateItem(x, y, GetRandomType());
+            }
+        }
+    }
+
+    private ItemType GetRandomType()
+    {
+        return (ItemType) Random.Range(1, Presets.Length);
     }
 
     private void CreateField()
@@ -158,48 +180,71 @@ public class DataGrid : MonoBehaviour
 
     private void UpdateFieldAfterAutoMatch()
     {
-        DropDownItems();
-        CreateNewItems();
-    }
-
-    private void DropDownItems()
-    {
-        UpdateInfo uInfo = new UpdateInfo();
-        int down = 0;
         for (int x = 0; x < Xsize; x++)
         {
-            for (int y = Ysize; y > -1; y--)
+            List<int> figuresVerticalIndexes = new List<int>();
+            List<int> emptiesVerticalIndexes = new List<int>();
+            List<int> updatedVerticalIndexes = new List<int>();
+            for (int y = 0; y < Ysize; y++)
             {
-                IsFallDown(x, y, y - 1);
-                    uInfo.Transformations.Add(new UpdateInfo.GridItemPair(Items[x, y], Items[x, down]));
-
-                Swap(Items[x, y], Items[x, down]);
+                if (Items[x, y].Type == ItemType.Empty)
+                {
+                    emptiesVerticalIndexes.Add(y);
+                }
+                else
+                {
+                    figuresVerticalIndexes.Add(y);
+                }
             }
+
+            //consolidation
+            updatedVerticalIndexes.AddRange(figuresVerticalIndexes);
+            updatedVerticalIndexes.AddRange(emptiesVerticalIndexes);
+            UpdateView(x, updatedVerticalIndexes);
+            UpdateData(x, updatedVerticalIndexes);
         }
     }
 
-    private bool IsFallDown(int x, int y, int down)
+    private void UpdateData(int x, List<int> updatedVerticalIndexes)
     {
-        return down > -1 && Items[x, down].Type == ItemType.Empty;
+        GridItem[] tmp = new GridItem[Ysize];
+        
+        for (int y = 0; y < Ysize; y++)
+        {
+            int updatedIndex = updatedVerticalIndexes[y];
+            tmp[y] = Items[x, updatedIndex];
+            tmp[y].OnItemPositionChange(x, updatedIndex);
+        }
+
+        for (int y = 0; y < Ysize; y++)
+        {
+            Items[x, y] = tmp[y];
+        }
     }
 
-    private void CreateNewItems()
+    private void UpdateView(int x, List<int> updatedVerticalIndexes)
     {
-//        throw new System.NotImplementedException();
+        for (int y = 0; y < Ysize; y++)
+        {
+            int updatedIndex = updatedVerticalIndexes[y];
+            AutoChangeItemView(Items[x, updatedIndex], Items[x, y]);
+        }
     }
 
     //TODO: Block mouse on move period
     private void TryMatch(GridItem selectedItem, GridItem item)
     {
         Debug.Log("Start swap");
-        Swap(selectedItem, item);
+        SwapItemsView(selectedItem, item);
+        SwapItemsLogic(selectedItem, item);
 
         MatchInfo matchForSelectedItem = MatchGetter.GetMatchInfo(selectedItem);
         MatchInfo matchForItem = MatchGetter.GetMatchInfo(item);
 
         if (!matchForSelectedItem.IsValidMatch() && !matchForItem.IsValidMatch())
         {
-            Swap(selectedItem, item, true);
+            SwapItemsView(selectedItem, item, true);
+            SwapItemsLogic(selectedItem, item);
         }
 
         if (matchForSelectedItem.IsValidMatch())
@@ -239,18 +284,22 @@ public class DataGrid : MonoBehaviour
         return null;
     }
 
-    private void Swap(GridItem selectedItem, GridItem item, bool isDelay = false)
+    private void SwapItemsView(GridItem selectedItem, GridItem item, bool isDelay = false)
     {
         Vector3 selectedItemPosition = selectedItem.transform.position;
         Vector3 itemPosition = item.transform.position;
         float delay = isDelay ? MoveDuration : 0;
         selectedItem.transform.DOMove(itemPosition, MoveDuration).SetDelay(delay);
         item.transform.DOMove(selectedItemPosition, MoveDuration).SetDelay(delay);
-
-        SwapItemsIndex(selectedItem, item);
     }
 
-    private void SwapItemsIndex(GridItem selectedItem, GridItem item)
+    private void AutoChangeItemView(GridItem item, GridItem newItem)
+    {
+        Vector3 newPosition = newItem.transform.position;
+        item.transform.DOMove(newPosition, TimeForCreation);
+    }
+
+    private void SwapItemsLogic(GridItem selectedItem, GridItem item)
     {
         //Swap in Items[,]
         GridItem tmp = Items[selectedItem.X, selectedItem.Y];
